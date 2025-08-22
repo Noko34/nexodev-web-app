@@ -1,8 +1,8 @@
 {
-  "name": "nexora-devlabs",
-  "version": "0.1.0",
+  "name": "nexora-devlabs-web-app",
+  "version": "1.0.0",
   "private": true,
-  "description": "Nexora DevLabs - Build smart. Ship fast.",
+  "description": "Nexora DevLabs | Simplify. Build. Grow.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

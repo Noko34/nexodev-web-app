@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://nexora-devlabs.com/sitemap.xml
+Sitemap: https://nexoradevlabs.com/sitemap.xml
 
 # Disallow admin or private areas (when they exist)
 Disallow: /api/

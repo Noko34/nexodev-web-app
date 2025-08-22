@@ -3,7 +3,7 @@ import { ImageResponse } from "@vercel/og";
 
 export const runtime = "edge";
 
-export const alt = "Nexora DevLabs - Building smart. Shipping fast.";
+export const alt = "Nexora DevLabs - Simplify. Build. Grow.";
 export const contentType = "image/png";
 export const size = {
   width: 1200,
@@ -77,9 +77,11 @@ export default async function Image() {
             lineHeight: 1.1,
           }}
         >
-          Build smart.
+          Simplify.
           <br />
-          Ship fast.
+          Build.
+          <br />
+          Grow.
         </h1>
 
         {/* Subtitle */}
