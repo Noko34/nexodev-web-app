@@ -21,10 +21,10 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://nexora-devlabs.com"),
-  title: "Nexora DevLabs - Build smart. Ship fast.",
+  metadataBase: new URL("https://nexoradevlabs.com"),
+  title: "Nexora DevLabs - Simplify. Build. Grow.",
   description:
-    "We craft lean, modern software for teams who value clarity, velocity, and reliability.",
+    "Simplifying technology to build innovative, impactful, and collaborative digital solutions that empower brands worldwide.",
   keywords: [
     "software development",
     "product engineering",
@@ -49,10 +49,10 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://nexora-devlabs.com",
-    title: "Nexora DevLabs - Build smart. Ship fast.",
+    url: "https://nexoradevlabs.com",
+    title: "Nexora DevLabs - Simplify. Build. Grow.",
     description:
-      "We craft lean, modern software for teams who value clarity, velocity, and reliability.",
+      "Simplifying technology to build innovative, impactful, and collaborative digital solutions that empower brands worldwide",
     siteName: "Nexora DevLabs",
     images: [
       {
@@ -65,9 +65,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nexora DevLabs - Build smart. Ship fast.",
+    title: "Nexora DevLabs - Simplify. Build. Grow.",
     description:
-      "We craft lean, modern software for teams who value clarity, velocity, and reliability.",
+      "Simplifying technology to build innovative, impactful, and collaborative digital solutions that empower brands worldwide",
     images: ["/logo.png"],
     creator: "@nexoradevlabs",
   },

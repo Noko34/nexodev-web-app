@@ -37,7 +37,7 @@ export function ActionButtons() {
 
       {/* Contact Button */}
       <button
-        onClick={() => window.open("mailto:hello@nexora-devlabs.com", "_blank")}
+        onClick={() => window.open("mailto:hello@nexoradevlabs.com", "_blank")}
         className="group relative rounded-full border border-green-500/30 bg-green-500/20 p-3 text-green-300 backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-green-400/50 hover:bg-green-500/40 hover:text-white"
         title="Send Message"
       >
@@ -59,7 +59,7 @@ export function ActionButtons() {
 
       {/* External Link Button */}
       <button
-        onClick={() => window.open("https://nexora-devlabs.com", "_blank")}
+        onClick={() => window.open("https://nexoradevlabs.com", "_blank")}
         className="group relative rounded-full border border-orange-500/30 bg-orange-500/20 p-3 text-orange-300 backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-orange-400/50 hover:bg-orange-500/40 hover:text-white"
         title="Visit Website"
       >
@@ -95,7 +95,7 @@ export function CompactActionButtons() {
       </button>
 
       <button
-        onClick={() => window.open("mailto:hello@nexora-devlabs.com", "_blank")}
+        onClick={() => window.open("mailto:hello@nexoradevlabs.com", "_blank")}
         className="rounded-full border border-green-500/30 bg-green-500/20 p-2 text-green-300 backdrop-blur-sm transition-all duration-200 hover:bg-green-500/40 hover:text-white"
         title="Contact"
       >
