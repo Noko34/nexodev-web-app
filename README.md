@@ -14,6 +14,7 @@ A delightful, animated face at the top of the page that brings personality to th
 - **Hover Effects**: Gentle glow and scale on hover
 - **Accessibility**: Respects `prefers-reduced-motion` preference
 - **Performance**: Pauses animations when tab is hidden
+- **GitHub Integration**: Shows organization stats with fallback for rate limiting
 
 #### Animation Details
 - **Expressions**: Randomly triggered every 6-30 seconds with weighted randomness
@@ -42,12 +43,21 @@ A delightful, animated face at the top of the page that brings personality to th
    pnpm install
    ```
 
-2. **Run development server**:
+2. **Configure GitHub API (Optional)**:
+   To avoid rate limiting on the GitHub stats feature, create a GitHub personal access token:
+   - Go to [GitHub Settings > Developer settings > Personal access tokens](https://github.com/settings/tokens)
+   - Generate a new token with `public_repo` scope
+   - Add to your `.env.local` file:
+     ```bash
+     NEXT_PUBLIC_GITHUB_TOKEN=ghp_your_token_here
+     ```
+
+3. **Run development server**:
    ```bash
    pnpm dev
    ```
 
-3. **Open** [http://localhost:3000](http://localhost:3000)
+4. **Open** [http://localhost:3000](http://localhost:3000)
 
 ## Project Structure
 
