@@ -14,7 +14,7 @@ export function ActionButtons() {
       {/* GitHub Button */}
       <button
         onClick={() =>
-          window.open("https://github.com/Nexora-DevLabs", "_blank")
+          window.open("https://github.com/NexoraDevLabs", "_blank")
         }
         className="group relative rounded-full border border-gray-600/30 bg-gray-800/20 p-3 text-gray-300 backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-gray-500/50 hover:bg-gray-800/40 hover:text-white"
         title="View GitHub Stats"
@@ -26,7 +26,7 @@ export function ActionButtons() {
       {/* Calendar Button */}
       <button
         onClick={() =>
-          window.open("https://cal.com/nexora-devlabs/15min", "_blank")
+          window.open("https://cal.com/nexoradevlabs/15min", "_blank")
         }
         className="group relative rounded-full border border-blue-500/30 bg-blue-500/20 p-3 text-blue-300 backdrop-blur-sm transition-all duration-200 hover:scale-105 hover:border-blue-400/50 hover:bg-blue-500/40 hover:text-white"
         title="Book a Meeting"
@@ -76,7 +76,7 @@ export function CompactActionButtons() {
     <div className="flex items-center gap-2">
       <button
         onClick={() =>
-          window.open("https://github.com/Nexora-DevLabs", "_blank")
+          window.open("https://github.com/NexoraDevLabs", "_blank")
         }
         className="rounded-full border border-gray-600/30 bg-gray-800/20 p-2 text-gray-300 backdrop-blur-sm transition-all duration-200 hover:bg-gray-800/40 hover:text-white"
         title="GitHub"
@@ -86,7 +86,7 @@ export function CompactActionButtons() {
 
       <button
         onClick={() =>
-          window.open("https://cal.com/nexora-devlabs/15min", "_blank")
+          window.open("https://cal.com/nexoradevlabs/15min", "_blank")
         }
         className="rounded-full border border-blue-500/30 bg-blue-500/20 p-2 text-blue-300 backdrop-blur-sm transition-all duration-200 hover:bg-blue-500/40 hover:text-white"
         title="Book Meeting"
