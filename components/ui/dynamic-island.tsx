@@ -305,7 +305,7 @@ export function DynamicIsland() {
     setIsLoadingGithub(true);
     try {
       const reposResponse = await fetch(
-        "https://api.github.com/orgs/Nexora-DevLabs/repos?per_page=100&sort=updated",
+        "https://api.github.com/orgs/NexoraDevLabs/repos?per_page=100&sort=updated",
       );
       const repos = await reposResponse.json();
 
@@ -639,7 +639,7 @@ export function DynamicIsland() {
 
                 <Button
                   onClick={() =>
-                    window.open("https://github.com/Nexora-DevLabs", "_blank")
+                    window.open("https://github.com/NexoraDevLabs", "_blank")
                   }
                   className="flex w-full items-center justify-center gap-2 bg-gray-800 py-3 text-sm text-white transition-all duration-200 hover:bg-gray-700 active:scale-95"
                 >
@@ -724,7 +724,7 @@ export function DynamicIsland() {
                   <Button
                     onClick={() =>
                       window.open(
-                        "https://cal.com/nexora-devlabs/15min",
+                        "https://cal.com/nexoradevlabs/15min",
                         "_blank",
                       )
                     }
@@ -747,7 +747,7 @@ export function DynamicIsland() {
                   </p>
                   <Button
                     onClick={() =>
-                      window.open("https://cal.com/nexora-devlabs", "_blank")
+                      window.open("https://cal.com/nexoradevlabs", "_blank")
                     }
                     className="flex w-full items-center justify-center gap-1 bg-purple-500 py-1.5 text-xs text-white transition-all duration-200 hover:bg-purple-600 active:scale-95"
                   >
@@ -916,7 +916,7 @@ export function DynamicIsland() {
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Button
                 onClick={() =>
-                  window.open("https://github.com/Nexora-DevLabs", "_blank")
+                  window.open("https://github.com/NexoraDevLabs", "_blank")
                 }
                 className="flex items-center justify-center gap-1 bg-gray-800 py-2 text-xs text-white transition-all duration-200 hover:bg-gray-700 active:scale-95"
               >
@@ -937,7 +937,7 @@ export function DynamicIsland() {
               <Button
                 onClick={() =>
                   window.open(
-                    "https://linkedin.com/company/nexora-devlabs",
+                    "https://linkedin.com/company/nexoradevlabs",
                     "_blank",
                   )
                 }
