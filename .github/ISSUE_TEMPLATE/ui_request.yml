@@ -1,0 +1,28 @@
+name: "🎨 UI / Design Request"
+description: Request a UI/UX or style change
+title: "[UI]: "
+labels: ["design", "enhancement", "triage"]
+body:
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Design
+      description: Describe the current design or style you’d like to improve.
+      placeholder: "The navbar feels cluttered on mobile..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Change
+      description: Describe or mock up your suggestion.
+      placeholder: "Simplify the navbar with a hamburger menu..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefit
+    attributes:
+      label: Benefit
+      description: Why is this change valuable? Who benefits?
