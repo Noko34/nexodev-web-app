@@ -5,7 +5,7 @@ on:
     types: [opened, edited, synchronize, reopened, ready_for_review]
 
 permissions:
-  pull-requests: read
+  pull-requests: write
   statuses: write
 
 jobs:
@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR title against Conventional Commits
+        id: lint_pr_title
         uses: amannn/action-semantic-pull-request@v5
         with:
           types: |
@@ -29,3 +30,25 @@ jobs:
             revert
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summarise result in PR Checks
+        if: always() # run even if previous step fails
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const passed = core.getInput('lint_pr_title.result', { required: false }) !== 'false';
+            const title = context.payload.pull_request.title;
+
+            let summary = `### 📝 PR Title Check\n`;
+            summary += `**Title:** \`${title}\`\n\n`;
+            if (passed) {
+              summary += `✅ Title follows Conventional Commits.`;
+            } else {
+              summary += `❌ Title does not follow Conventional Commits.\n\n`;
+              summary += `> Expected formats:\n`;
+              summary += `\`feat: ...\`, \`fix: ...\`, \`chore: ...\`, \`docs: ...\`, etc.`;
+            }
+
+            await core.summary
+              .addRaw(summary, true) // true = render Markdown
+              .write();
