@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Ask a Question
+    url: https://github.com/nexoradevlabs/nexora-discussions/discussions/categories/q-a
+    about: Use Discussions Q&A for general questions and support.
+  - name: 💡 Share an Idea
+    url: https://github.com/nexoradevlabs/nexora-discussions/discussions/categories/ideas
+    about: Share new ideas and proposals in Discussions.
+  - name: 📢 Announcements
+    url: https://github.com/nexoradevlabs/nexora-discussions/discussions/categories/announcements
+    about: Check for official updates and news.
