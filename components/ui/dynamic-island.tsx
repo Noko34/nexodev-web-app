@@ -297,6 +297,7 @@ export function DynamicIsland() {
   // Fetch GitHub stats when GitHub state is opened
   useEffect(() => {
     if (currentState === "github" && !githubStats && !isLoadingGithub) {
+      console.log('GitHub state opened, fetching stats...');
       fetchGitHubStats();
     }
   }, [currentState, githubStats, isLoadingGithub]);
@@ -304,25 +305,122 @@ export function DynamicIsland() {
   const fetchGitHubStats = async () => {
     setIsLoadingGithub(true);
     try {
-      const reposResponse = await fetch(
-        "https://api.github.com/orgs/Nexora-DevLabs/repos?per_page=100&sort=updated",
+      // Check if we have a GitHub token to avoid rate limiting
+      const githubToken = process.env.NEXT_PUBLIC_GITHUB_TOKEN;
+      const headers: HeadersInit = {
+        'Accept': 'application/vnd.github.v3+json',
+      };
+      
+      if (githubToken) {
+        headers['Authorization'] = `token ${githubToken}`;
+      }
+      
+      // First get org info
+      const orgResponse = await fetch(
+        "https://api.github.com/orgs/NexoraDevLabs",
+        { headers }
       );
+      
+      if (!orgResponse.ok) {
+        if (orgResponse.status === 403) {
+          // Rate limited - show fallback data
+          console.log('GitHub API rate limited, showing fallback data');
+          const retryAfter = orgResponse.headers.get('Retry-After');
+          const rateLimitReset = orgResponse.headers.get('X-RateLimit-Reset');
+          
+          const fallbackStats = {
+            totalStars: 0,
+            totalForks: 0,
+            totalWatchers: 0,
+            totalRepos: 1,
+            publicRepos: 1,
+            privateRepos: 0,
+            lastUpdated: new Date().toLocaleDateString(),
+            orgName: 'Nexora DevLabs',
+            orgDescription: 'Simplifying technology to build innovative solutions',
+            rateLimited: true,
+            rateLimitReset: rateLimitReset ? new Date(parseInt(rateLimitReset) * 1000) : null,
+            retryAfter: retryAfter ? parseInt(retryAfter) : null,
+          };
+          setGithubStats(fallbackStats);
+          return;
+        }
+        throw new Error(`GitHub API error: ${orgResponse.status}`);
+      }
+      
+      const orgData = await orgResponse.json();
+      
+      // Get repos with detailed info
+      const reposResponse = await fetch(
+        "https://api.github.com/orgs/NexoraDevLabs/repos?per_page=100&sort=updated",
+        { headers }
+      );
+      
+      if (!reposResponse.ok) {
+        if (reposResponse.status === 403) {
+          // Rate limited - show fallback data
+          console.log('GitHub API rate limited, showing fallback data');
+          const retryAfter = reposResponse.headers.get('Retry-After');
+          const rateLimitReset = reposResponse.headers.get('X-RateLimit-Reset');
+          
+          const fallbackStats = {
+            totalStars: 0,
+            totalForks: 0,
+            totalWatchers: 0,
+            totalRepos: 1,
+            publicRepos: 1,
+            privateRepos: 0,
+            lastUpdated: new Date().toLocaleDateString(),
+            orgName: 'Nexora DevLabs',
+            orgDescription: 'Simplifying technology to build innovative solutions',
+            rateLimited: true,
+            rateLimitReset: rateLimitReset ? new Date(parseInt(rateLimitReset) * 1000) : null,
+            retryAfter: retryAfter ? parseInt(retryAfter) : null,
+          };
+          setGithubStats(fallbackStats);
+          return;
+        }
+        throw new Error(`GitHub API error: ${reposResponse.status}`);
+      }
+      
       const repos = await reposResponse.json();
 
       if (Array.isArray(repos)) {
+        // Calculate actual stats from repo data
         const stats = {
-          totalStars: 0,
-          totalForks: 0,
-          totalWatchers: 0,
+          totalStars: repos.reduce((sum, repo) => sum + (repo.stargazers_count || 0), 0),
+          totalForks: repos.reduce((sum, repo) => sum + (repo.forks_count || 0), 0),
+          totalWatchers: repos.reduce((sum, repo) => sum + (repo.watchers_count || 0), 0),
           totalRepos: repos.length,
           publicRepos: repos.filter((repo) => !repo.private).length,
           privateRepos: repos.filter((repo) => repo.private).length,
           lastUpdated: new Date().toLocaleDateString(),
+          orgName: orgData.name || 'Nexora DevLabs',
+          orgDescription: orgData.description || 'Simplifying technology to build innovative solutions',
+          rateLimited: false,
+          rateLimitReset: null,
         };
+        
+        console.log('GitHub stats fetched successfully:', stats);
         setGithubStats(stats);
+      } else {
+        throw new Error('Invalid response format from GitHub API');
       }
     } catch (error) {
       console.error("Failed to fetch GitHub stats:", error);
+      // Set error state for better UX
+      setGithubStats({
+        error: true,
+        message: error instanceof Error ? error.message : 'Failed to fetch stats',
+        totalRepos: 1, // Fallback to show at least one repo
+        publicRepos: 1,
+        privateRepos: 0,
+        totalStars: 0,
+        totalForks: 0,
+        totalWatchers: 0,
+        rateLimited: false,
+        rateLimitReset: null,
+      });
     } finally {
       setIsLoadingGithub(false);
     }
@@ -597,8 +695,21 @@ export function DynamicIsland() {
               <div className="flex items-center justify-center py-8">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent"></div>
               </div>
-            ) : githubStats ? (
+            ) : githubStats && !githubStats.error ? (
               <div className="space-y-3">
+                {githubStats.rateLimited && (
+                  <div className="mb-3 rounded-lg bg-yellow-600/20 border border-yellow-500/30 p-2 text-center">
+                    <div className="text-xs text-yellow-400">
+                      ⚠️ Showing cached data (API rate limited)
+                      {githubStats.rateLimitReset && (
+                        <div className="mt-1">
+                          Resets: {githubStats.rateLimitReset.toLocaleTimeString()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-2 text-center">
                   <div className="rounded-lg bg-gray-800/50 p-2">
                     <Star className="mx-auto mb-1 h-5 w-5 text-yellow-400" />
@@ -637,20 +748,31 @@ export function DynamicIsland() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={() =>
-                    window.open("https://github.com/Nexora-DevLabs", "_blank")
-                  }
-                  className="flex w-full items-center justify-center gap-2 bg-gray-800 py-3 text-sm text-white transition-all duration-200 hover:bg-gray-700 active:scale-95"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  View our GitHub
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    onClick={() =>
+                      window.open("https://github.com/NexoraDevLabs", "_blank")
+                    }
+                    className="flex w-full items-center justify-center gap-2 bg-gray-800 py-3 text-sm text-white transition-all duration-200 hover:bg-gray-700 active:scale-95"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    View our GitHub
+                  </Button>
+                  
+                  {githubStats.rateLimited && (
+                    <Button
+                      onClick={fetchGitHubStats}
+                      className="flex w-full items-center justify-center gap-2 bg-yellow-600 py-2 text-xs text-white transition-all duration-200 hover:bg-yellow-700 active:scale-95"
+                    >
+                      🔄 Retry API Call
+                    </Button>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="py-8 text-center">
                 <div className="mb-4 text-gray-400">
-                  Failed to load GitHub stats
+                  {githubStats?.error ? githubStats.message : 'Failed to load GitHub stats'}
                 </div>
                 <Button
                   onClick={fetchGitHubStats}
@@ -724,7 +846,7 @@ export function DynamicIsland() {
                   <Button
                     onClick={() =>
                       window.open(
-                        "https://cal.com/nexora-devlabs/15min",
+                        "https://cal.com/nexoradevlabs/15min",
                         "_blank",
                       )
                     }
@@ -747,7 +869,7 @@ export function DynamicIsland() {
                   </p>
                   <Button
                     onClick={() =>
-                      window.open("https://cal.com/nexora-devlabs", "_blank")
+                      window.open("https://cal.com/nexoradevlabs", "_blank")
                     }
                     className="flex w-full items-center justify-center gap-1 bg-purple-500 py-1.5 text-xs text-white transition-all duration-200 hover:bg-purple-600 active:scale-95"
                   >
@@ -916,7 +1038,7 @@ export function DynamicIsland() {
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Button
                 onClick={() =>
-                  window.open("https://github.com/Nexora-DevLabs", "_blank")
+                  window.open("https://github.com/NexoraDevLabs", "_blank")
                 }
                 className="flex items-center justify-center gap-1 bg-gray-800 py-2 text-xs text-white transition-all duration-200 hover:bg-gray-700 active:scale-95"
               >
@@ -937,7 +1059,7 @@ export function DynamicIsland() {
               <Button
                 onClick={() =>
                   window.open(
-                    "https://linkedin.com/company/nexora-devlabs",
+                    "https://linkedin.com/company/nexoradevlabs",
                     "_blank",
                   )
                 }

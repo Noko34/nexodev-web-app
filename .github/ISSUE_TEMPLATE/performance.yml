@@ -1,0 +1,29 @@
+name: "⚡ Performance Issue"
+description: Report a slowdown, lag, or inefficiency in the Nexora web app
+title: "[Performance]: "
+labels: ["performance", "triage"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the performance problem (slow load, lag, etc.).
+      placeholder: "Homepage takes 4s to load on mobile..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Device, browser, network conditions.
+      placeholder: "Android Chrome on 4G"
+    validations:
+      required: true
+
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Metrics
+      description: If possible, share Lighthouse/Web Vitals results.
+      placeholder: "LCP = 4.2s, FID = 180ms"
