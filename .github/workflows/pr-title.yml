@@ -27,6 +27,8 @@ jobs:
         id: semantic
         uses: amannn/action-semantic-pull-request@v5
         continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
           types: |
             feat
@@ -40,8 +42,6 @@ jobs:
             ci
             build
             revert
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
       # 3) Additional style checks (subject ≤ 72 chars, no trailing ".")
       - name: Style checks
@@ -51,16 +51,13 @@ jobs:
           script: |
             const title = context.payload.pull_request.title;
 
-            // Conventional Commit basic pattern:
-            // type(scope)!?: subject
+            // Conventional Commit pattern: type(scope)!?: subject
             const cc = /^(?<type>feat|fix|chore|docs|style|refactor|perf|test|ci|build|revert)(\([\w\s./-]+\))?(?<bang>!)?:\s(?<subject>.+)$/i;
             const m = title.match(cc);
 
             let ok = true;
             const reasons = [];
 
-            // If we can't parse, leave detailed message to the semantic step,
-            // but still mark style as failed so we can block.
             if (!m) {
               ok = false;
               reasons.push("Title does not match `type(scope)?: subject` pattern.");
@@ -88,41 +85,41 @@ jobs:
       # 4) Prepare a combined summary
       - name: Prepare summary text
         id: prep
+        shell: bash
         run: |
           TITLE="${{ github.event.pull_request.title }}"
-          SEM_OUTCOME="${{ steps.semantic.outcome }}"
+          # Note: amannn/action-semantic-pull-request exposes 'conclusion' for the check result.
+          SEM_CONCLUSION="${{ steps.semantic.outcome || steps.semantic.conclusion }}"
           STYLE_OK="${{ steps.stylecheck.outputs.ok }}"
           REASONS="${{ steps.stylecheck.outputs.reasons }}"
 
-          if [ "$SEM_OUTCOME" = "success" ] && [ "$STYLE_OK" = "true" ]; then
+          if [ "${SEM_CONCLUSION}" = "success" ] && [ "${STYLE_OK}" = "true" ]; then
             RESULT="pass"
-            MSG="✅ *PR title is valid.*  
-            **Title:** \`${TITLE}\`  
+            cat > summary.md <<'EOF'
+✅ *PR title is valid.*
 
-            Follows Conventional Commits (type) and style (≤ 72 chars, no trailing full stop)."
+Follows Conventional Commits (type) and style (≤ 72 chars, no trailing full stop).
+EOF
           else
             RESULT="fail"
-            MSG="❌ *PR title is invalid.*  
-            **Title:** \`${TITLE}\`
+            cat > summary.md <<'EOF'
+❌ *PR title is invalid.*
 
-            **Expected format:** \`type(scope)?: subject\`  
-            Examples:  
-            \`feat: add dark mode toggle\`  
-            \`fix: handle null organisation id\`  
-            \`chore: bump dependencies\`
+**Expected format:** `type(scope)?: subject`  
+Examples:  
+`feat: add dark mode toggle`  
+`fix: handle null organisation id`  
+`chore: bump dependencies`
 
-            **Style rules:** subject ≤ 72 characters; no trailing full stop."
-            # Append specific style reasons if any
-            if [ -n "$REASONS" ]; then
-              MSG="$MSG
-
-            **Style issues detected:**
-            - $REASONS"
+**Style rules:** subject ≤ 72 characters; no trailing full stop.
+EOF
+            if [ -n "${REASONS}" ]; then
+              printf "\n**Style issues detected:**\n- %s\n" "${REASONS}" >> summary.md
             fi
           fi
 
-          echo "result=$RESULT" >> "$GITHUB_OUTPUT"
-          printf "%s" "$MSG" > summary.md
+          echo "result=${RESULT}" >> "$GITHUB_OUTPUT"
+          echo "**Title:** \`${TITLE}\`" | cat - summary.md > summary.tmp && mv summary.tmp summary.md
 
       # 5) Checks tab summary card
       - name: Write summary card
@@ -131,7 +128,10 @@ jobs:
           script: |
             const fs = require('fs');
             const body = fs.readFileSync('summary.md', 'utf8');
-            await core.summary.addRaw(`### 📝 PR Title Check\n\n${body}`, true).write();
+            await core.summary
+              .addHeading('📝 PR Title Check', 3)
+              .addRaw(body, true)
+              .write();
 
       # 6) Sticky PR comment (as Nexoroid)
       - name: Create or update PR comment
@@ -146,7 +146,7 @@ jobs:
             const marker = '<!-- nexoroid-pr-title-check -->';
 
             const comments = await github.rest.issues.listComments({ owner, repo, issue_number, per_page: 100 });
-            const existing = comments.data.find(c => c.user.type === 'Bot' && c.body?.includes(marker));
+            const existing = comments.data.find(c => (c.user?.type === 'Bot') && (c.body || '').includes(marker));
 
             const commentBody = `${marker}
 ${body}
