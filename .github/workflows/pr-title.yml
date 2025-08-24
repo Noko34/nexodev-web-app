@@ -7,14 +7,12 @@ on:
 permissions:
   pull-requests: write
   issues: write
-  statuses: write
 
 jobs:
   check-title:
     runs-on: ubuntu-latest
-
     steps:
-      # 1) Generate short-lived installation token for the Nexoroid app
+      # 1) App token (Nexoroid)
       - name: Generate Nexoroid installation token
         id: app-token
         uses: tibdex/github-app-token@v2
@@ -23,10 +21,9 @@ jobs:
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
 
       # 2) Conventional Commit type validation
-      - name: Validate PR title
+      - name: Validate PR title (Conventional Commits)
         id: semantic
         uses: amannn/action-semantic-pull-request@v5
-        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         with:
@@ -44,125 +41,84 @@ jobs:
             revert
 
       # 3) Additional style checks (subject ≤ 72 chars, no trailing ".")
-      - name: Style checks
+      - name: Style checks (length & punctuation)
         id: stylecheck
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const title = context.payload.pull_request.title;
-
-            // Conventional Commit pattern: type(scope)!?: subject
-            const cc = /^(?<type>feat|fix|chore|docs|style|refactor|perf|test|ci|build|revert)(\([\w\s./-]+\))?(?<bang>!)?:\s(?<subject>.+)$/i;
-            const m = title.match(cc);
-
-            let ok = true;
-            const reasons = [];
-
-            if (!m) {
-              ok = false;
-              reasons.push("Title does not match `type(scope)?: subject` pattern.");
-            } else {
-              const subject = m.groups.subject.trim();
-              const len = subject.length;
-
-              if (len === 0) {
-                ok = false;
-                reasons.push("Subject is empty after the colon.");
-              }
-              if (len > 72) {
-                ok = false;
-                reasons.push(`Subject is too long (${len} > 72 characters).`);
-              }
-              if (/[.。]\s*$/.test(subject)) {
-                ok = false;
-                reasons.push("Subject must not end with a full stop.");
-              }
-            }
-
-            core.setOutput('ok', ok ? 'true' : 'false');
-            core.setOutput('reasons', reasons.join('\n- '));
-
-      # 4) Prepare a combined summary
-      - name: Prepare summary text
-        id: prep
-        shell: bash
         run: |
+          set -euo pipefail
           TITLE="${{ github.event.pull_request.title }}"
-          # Note: amannn/action-semantic-pull-request exposes 'conclusion' for the check result.
-          SEM_CONCLUSION="${{ steps.semantic.outcome || steps.semantic.conclusion }}"
+          echo "Title: $TITLE"
+
+          # Write a tiny Node script to validate style precisely
+          cat > check.js <<'JS'
+          const title = process.env.PR_TITLE || "";
+          const cc = /^(?<type>feat|fix|chore|docs|style|refactor|perf|test|ci|build|revert)(\([\w\s./-]+\))?(?<bang>!)?:\s(?<subject>.+)$/i;
+          const out = { ok: true, reasons: [] };
+
+          const m = title.match(cc);
+          if (!m) {
+            out.ok = false;
+            out.reasons.push("Title does not match `type(scope)?: subject` pattern.");
+          } else {
+            const subject = m.groups.subject.trim();
+            const len = subject.length;
+            if (len === 0) { out.ok = false; out.reasons.push("Subject is empty after the colon."); }
+            if (len > 72) { out.ok = false; out.reasons.push(`Subject is too long (${len} > 72 characters).`); }
+            if (/[.。]\s*$/.test(subject)) { out.ok = false; out.reasons.push("Subject must not end with a full stop."); }
+          }
+
+          console.log(JSON.stringify(out));
+          JS
+
+          export PR_TITLE="$TITLE"
+          RESULT_JSON="$(node check.js)"
+          echo "Style result: $RESULT_JSON"
+
+          OK="$(echo "$RESULT_JSON" | jq -r '.ok')"
+          REASONS="$(echo "$RESULT_JSON" | jq -r '.reasons | join("\n- ")')"
+
+          echo "ok=$OK" >> "$GITHUB_OUTPUT"
+          echo "reasons=$REASONS" >> "$GITHUB_OUTPUT"
+
+      # 4) Summarise in Checks tab
+      - name: Write summary
+        run: |
+          set -euo pipefail
+          TITLE="${{ github.event.pull_request.title }}"
+          SEM_CONCLUSION="${{ steps.semantic.conclusion }}"
           STYLE_OK="${{ steps.stylecheck.outputs.ok }}"
           REASONS="${{ steps.stylecheck.outputs.reasons }}"
 
-          if [ "${SEM_CONCLUSION}" = "success" ] && [ "${STYLE_OK}" = "true" ]; then
-            RESULT="pass"
-            cat > summary.md <<'EOF'
-✅ *PR title is valid.*
-
-Follows Conventional Commits (type) and style (≤ 72 chars, no trailing full stop).
-EOF
-          else
-            RESULT="fail"
-            cat > summary.md <<'EOF'
-❌ *PR title is invalid.*
-
-**Expected format:** `type(scope)?: subject`  
-Examples:  
-`feat: add dark mode toggle`  
-`fix: handle null organisation id`  
-`chore: bump dependencies`
-
-**Style rules:** subject ≤ 72 characters; no trailing full stop.
-EOF
-            if [ -n "${REASONS}" ]; then
-              printf "\n**Style issues detected:**\n- %s\n" "${REASONS}" >> summary.md
+          {
+            echo "### PR Title Check"
+            echo ""
+            echo "**Title:** \`$TITLE\`"
+            echo ""
+            if [ "$SEM_CONCLUSION" = "success" ] && [ "$STYLE_OK" = "true" ]; then
+              echo "✅ PR title is valid. Follows Conventional Commits and style (≤ 72 chars, no trailing full stop)."
+            else
+              echo "❌ PR title is invalid."
+              echo ""
+              echo "**Expected format:** \`type(scope)?: subject\`"
+              echo "Examples:"
+              echo "- \`feat: add dark mode toggle\`"
+              echo "- \`fix: handle null organisation id\`"
+              echo "- \`chore: bump dependencies\`"
+              echo ""
+              echo "**Style rules:** subject ≤ 72 characters; no trailing full stop."
+              if [ -n "$REASONS" ] && [ "$REASONS" != "null" ]; then
+                echo ""
+                echo "**Style issues detected:**"
+                # prefix each reason with a dash
+                while IFS= read -r line; do
+                  [ -n "$line" ] && echo "- $line"
+                done <<< "$REASONS"
+              fi
             fi
-          fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          echo "result=${RESULT}" >> "$GITHUB_OUTPUT"
-          echo "**Title:** \`${TITLE}\`" | cat - summary.md > summary.tmp && mv summary.tmp summary.md
-
-      # 5) Checks tab summary card
-      - name: Write summary card
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const body = fs.readFileSync('summary.md', 'utf8');
-            await core.summary
-              .addHeading('📝 PR Title Check', 3)
-              .addRaw(body, true)
-              .write();
-
-      # 6) Sticky PR comment (as Nexoroid)
-      - name: Create or update PR comment
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ steps.app-token.outputs.token }}
-          script: |
-            const fs = require('fs');
-            const body = fs.readFileSync('summary.md', 'utf8');
-            const { owner, repo } = context.repo;
-            const issue_number = context.payload.pull_request.number;
-            const marker = '<!-- nexoroid-pr-title-check -->';
-
-            const comments = await github.rest.issues.listComments({ owner, repo, issue_number, per_page: 100 });
-            const existing = comments.data.find(c => (c.user?.type === 'Bot') && (c.body || '').includes(marker));
-
-            const commentBody = `${marker}
-${body}
-
----
-🤖 Commented by **Nexoroid** · enforcing Conventional Commits (type + style)`;
-
-            if (existing) {
-              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body: commentBody });
-            } else {
-              await github.rest.issues.createComment({ owner, repo, issue_number, body: commentBody });
-            }
-
-      # 7) Block merge if invalid
+      # 5) Block merge if invalid
       - name: Fail if invalid
-        if: steps.prep.outputs.result == 'fail'
+        if: steps.semantic.conclusion != 'success' || steps.stylecheck.outputs.ok != 'true'
         run: |
-          echo "PR title does not meet Conventional Commits requirements."
+          echo "PR title does not meet Conventional Commits and/or style requirements."
           exit 1
